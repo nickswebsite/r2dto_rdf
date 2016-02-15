@@ -1,0 +1,25 @@
+- hosts: localhost
+  connection: local
+  vars:
+    pypy3_url: "https://bitbucket.org/pypy/pypy/downloads/pypy3-2.4.0-linux64.tar.bz2"
+    pypy_url: "https://bitbucket.org/pypy/pypy/downloads/pypy-4.0.1-linux64.tar.bz2"
+    python35_url: "https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz"
+  tasks:
+  - shell: "echo $(pwd)"
+#    register: pwd
+
+#    pwd:
+#      stdout: /home/vagrant/nickswebsite/r2dto
+#  - unarchive: src={{ pypy3_url }} dest={{ pwd.stdout }}/v copy=no
+#  - file: path={{ pwd.stdout }}/v/bin/{{ item }} state=link src={{ pwd.stdout }}/v/pypy3-2.4.0-linux64/bin/{{ item }}
+#    with_items:
+#    - pypy3
+#  - unarchive: src={{ pypy_url }} dest={{ pwd.stdout }}/v copy=no
+#  - file: path={{ pwd.stdout }}/v/bin/{{ item }} state=link src={{ pwd.stdout }}/v/pypy-2.1/bin/{{ item }}
+#  - unarchive: src={{ python35_url }} dest={{ pwd.stdout }}/v copy=no
+#  - shell: ./configure --prefix={{ pwd.stdout }}/v/python35
+#    args:
+#      chdir: '{{ pwd.stdout }}/v/Python-3.5.1'
+#  - shell: make && make install
+#    args:
+#      chdir: '{{ pwd.stdout }}/v/Python-3.5.1'
