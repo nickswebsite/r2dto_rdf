@@ -20,12 +20,15 @@ def is_iri(iri):
 class RdfField(object):
     datatype = None
 
-    def __init__(self, predicate, required, language=None):
+    def __init__(self, predicate, required, datatype=None, language=None, validators=None):
         self.predicate = predicate
         self.required = required
         self.object_field_name = None
         self.language = language
         self.parent = None
+        self.validators = validators or ()
+        if datatype:
+            self.datatype = datatype
 
     def get_configuration_errors(self):
         if not self.predicate:
@@ -46,7 +49,7 @@ class RdfIriField(RdfField):
 
     def __init__(self, predicate=None, required=False, validators=None):
         self.string_field = r2dto.fields.StringField(validators=validators)
-        super(RdfIriField, self).__init__(predicate, required)
+        super(RdfIriField, self).__init__(predicate, required, validators=validators)
 
     def get_configuration_errors(self):
         pass
@@ -59,34 +62,18 @@ class RdfIriField(RdfField):
         if not is_iri(data):
             raise ValidationError(["{} is not an IRI".format(self.object_field_name)])
 
-    @property
-    def validators(self):
-        return self.string_field.validators
-
-    @validators.setter
-    def validators(self, item):
-        self.string_field.validators = item
-
 
 class RdfStringField(RdfField):
     def __init__(self, predicate=None, required=False, validators=None, datatype=None, language=None):
-        super(RdfStringField, self).__init__(predicate, required, language=language)
+        super(RdfStringField, self).__init__(predicate, required, datatype=datatype,
+                                             language=language, validators=validators)
         self.string_field = r2dto.fields.StringField(validators=validators)
-        self.datatype = datatype
 
     def validate(self, obj):
         try:
             self.string_field.object_to_data(obj)
         except r2dto.InvalidTypeValidationError as ex:
             raise ValidationError(ex.errors)
-
-    @property
-    def validators(self):
-        return self.string_field.validators
-
-    @validators.setter
-    def validators(self, item):
-        self.string_field.validators = item
 
 
 class RdfBooleanField(RdfField):
@@ -103,14 +90,26 @@ class RdfBooleanField(RdfField):
 
 class RdfIntegerField(RdfField):
     def __init__(self, predicate, required=False, validators=None, datatype=None):
-        super(RdfIntegerField, self).__init__(predicate, required)
-        if datatype is not None:
-            self.datatype = datatype
         self.integer_field = r2dto.fields.IntegerField()
+        super(RdfIntegerField, self).__init__(predicate, required, datatype)
+
+    def validate(self, obj):
+        if isinstance(obj, bool):
+            raise ValidationError("{} must be a {}.  Got {}.".format(self.object_field_name, "int", type(obj)))
+        try:
+            self.integer_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)
+
+
+class RdfFloatField(RdfField):
+    def __init__(self, predicate, required=False, validators=None, datatype=None):
+        self.float_field = r2dto.fields.FloatField(required=required, validators=validators)
+        super(RdfFloatField, self).__init__(predicate, required, datatype)
 
     def validate(self, obj):
         try:
-            self.integer_field.object_to_data(obj)
+            self.float_field.object_to_data(obj)
         except r2dto.InvalidTypeValidationError as ex:
             raise ValidationError(ex.errors)
 
@@ -200,3 +199,17 @@ class RdfSetField(RdfField):
                 g.add((subject_node, predicate, data))
 
         return g
+
+
+class RdfDateTimeField(RdfField):
+    datatype = "http://www.w3.org/2001/XMLSchema#dateTime"
+
+    def __init__(self, predicate, required=False, validators=None):
+        super(RdfDateTimeField, self).__init__(predicate, required, validators=validators)
+        self.datetime_field = r2dto.fields.DateTimeField(validators=validators)
+
+    def validate(self, obj):
+        try:
+            self.datetime_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)

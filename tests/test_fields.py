@@ -5,7 +5,8 @@ import unittest
 from rdflib import URIRef
 
 from r2dto_rdf import ValidationError, RdfIriField, RdfStringField, RdfObjectField, RdfSetField, RdfSerializer, \
-    RdfBooleanField, RdfIntegerField
+    RdfBooleanField, RdfIntegerField, RdfFloatField
+from r2dto_rdf.fields import RdfDateTimeField
 from r2dto_rdf.serializer import RdflibNamespaceManager
 
 from tests.utils import RdflibTestCaseMixin
@@ -42,7 +43,23 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         expected = True
         self.assertEqual(expected, f.render(expected))
 
+        f.validate(True)
+        f.validate(False)
+
         self.assertRaises(ValidationError, f.validate, "123")
+
+    def test_datetime_field(self):
+        import datetime
+
+        f = RdfDateTimeField("http://api.nws#1")
+
+        expected = datetime.datetime(2014, 2, 1, 3, 5)
+        self.assertEqual(expected, f.render(expected))
+
+        f.validate(expected)
+
+        self.assertRaises(ValidationError, f.validate, "Some String")
+        self.assertRaises(ValidationError, f.validate, 123)
 
     def test_integer_field(self):
         f = RdfIntegerField("nws:test-field")
@@ -55,6 +72,19 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
 
         self.assertRaises(ValidationError, f.validate, "123")
         self.assertRaises(ValidationError, f.validate, 12.0)
+        self.assertRaises(ValidationError, f.validate, True)
+
+    def test_float_field(self):
+        f = RdfFloatField("nws:test-field")
+
+        errors = f.get_configuration_errors()
+        self.assertIsNone(errors)
+
+        expected = 2.34
+        self.assertEqual(expected, f.render(expected))
+
+        self.assertRaises(ValidationError, f.validate, "ABC")
+        self.assertRaises(ValidationError, f.validate, True)
 
     def test_list_field(self):
         s = URIRef("http://api.nickswebsite.net/data#1")

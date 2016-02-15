@@ -136,8 +136,6 @@ class BaseRdfSerializer(object):
         Returns an list of lists of the form:
         [[subject, [(predicate_one, value_one), (predicate_two, value_two)], ...]]]]
         """
-        self.validate()
-
         if not subject:
             subject_field = self.options.rdf_subject_field
             if subject_field:
