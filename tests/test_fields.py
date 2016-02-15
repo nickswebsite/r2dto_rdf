@@ -5,7 +5,7 @@ import unittest
 from rdflib import URIRef
 
 from r2dto_rdf import ValidationError, RdfIriField, RdfStringField, RdfObjectField, RdfSetField, RdfSerializer, \
-    RdfBooleanField
+    RdfBooleanField, RdfIntegerField
 from r2dto_rdf.serializer import RdflibNamespaceManager
 
 from tests.utils import RdflibTestCaseMixin
@@ -43,6 +43,18 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertEqual(expected, f.render(expected))
 
         self.assertRaises(ValidationError, f.validate, "123")
+
+    def test_integer_field(self):
+        f = RdfIntegerField("nws:test-field")
+
+        errors = f.get_configuration_errors()
+        self.assertIsNone(errors)
+
+        expected = 34
+        self.assertEqual(expected, f.render(expected))
+
+        self.assertRaises(ValidationError, f.validate, "123")
+        self.assertRaises(ValidationError, f.validate, 12.0)
 
     def test_list_field(self):
         s = URIRef("http://api.nickswebsite.net/data#1")

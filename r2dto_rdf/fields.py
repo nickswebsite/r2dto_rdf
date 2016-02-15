@@ -90,13 +90,27 @@ class RdfStringField(RdfField):
 
 
 class RdfBooleanField(RdfField):
-    def __init__(self, predicate, required=True):
+    def __init__(self, predicate, required=False):
         self.boolean_field = r2dto.fields.BooleanField(required=required)
         super(RdfBooleanField, self).__init__(predicate, required)
 
     def validate(self, obj):
         try:
             self.boolean_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)
+
+
+class RdfIntegerField(RdfField):
+    def __init__(self, predicate, required=False, validators=None, datatype=None):
+        super(RdfIntegerField, self).__init__(predicate, required)
+        if datatype is not None:
+            self.datatype = datatype
+        self.integer_field = r2dto.fields.IntegerField()
+
+    def validate(self, obj):
+        try:
+            self.integer_field.object_to_data(obj)
         except r2dto.InvalidTypeValidationError as ex:
             raise ValidationError(ex.errors)
 
