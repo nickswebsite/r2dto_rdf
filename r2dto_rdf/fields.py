@@ -251,7 +251,8 @@ class RdfUuidField(RdfField):
     def __init__(self, predicate, required=False, validators=None, iri=False):
         super(RdfUuidField, self).__init__(predicate, required, validators=validators)
         self.iri = iri
-        self.datatype = "@id"
+        if iri:
+            self.datatype = "@id"
 
     def validate(self, obj):
         if not isinstance(obj, uuid.UUID):

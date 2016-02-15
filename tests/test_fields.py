@@ -183,6 +183,7 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
 
     def test_uuid_field(self):
         f = RdfUuidField("http://api.nws#dt")
+        self.assertNotEqual("@id", f.datatype)
 
         expected = uuid.uuid4()
         self.assertEqual(str(expected), f.render(expected))
@@ -195,10 +196,10 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, True)
 
         iri_field = RdfUuidField("http://api.nws#dt", iri=True)
+        self.assertEqual(iri_field.datatype, "@id")
 
         test = "4e0b25c1-0792-4e7d-89b5-fe26460dff5b"
         self.assertEqual("urn:uuid:{}".format(test), iri_field.render(uuid.UUID(test)))
-        self.assertEqual(iri_field.datatype, "@id")
 
         # Make sure that the serializers will parse this correctly
         class S(RdfSerializer):
