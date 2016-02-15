@@ -30,7 +30,7 @@ def to_rdf_triples(s, p, o, datatype=None, language=None):
     if isinstance(o, basestring):
         if o.startswith("_:"):
             o = BNode(o)
-        elif "://" in o:
+        elif "://" in o or o.startswith("urn:"):
             o = URIRef(o)
         else:
             o = Literal(o, lang=language, datatype=datatype)
