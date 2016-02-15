@@ -32,7 +32,6 @@ def from_list_field(field, predicate):
 
 
 def from_object_field(field, predicate):
-    assert isinstance(field, r2dto.fields.ObjectField)
     s = create_rdf_serializer_from_r2dto_serializer(field.serializer_class)
 
     if predicate == "@collapse":
@@ -42,6 +41,9 @@ def from_object_field(field, predicate):
 
     return ret
 
+
+def from_boolean_field(field, predicate):
+    ret = RdfBooleanField
 
 FIELD_MAP = {
     r2dto.fields.StringField: from_string_field,
