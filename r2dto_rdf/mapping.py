@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 import r2dto
 
 from r2dto_rdf.serializer import RdfSerializerMetaclass, RdfSerializer
-from r2dto_rdf.fields import RdfField, RdfIriField, RdfObjectField, RdfStringField, RdfSetField
+from r2dto_rdf.fields import RdfField, RdfIriField, RdfObjectField, RdfStringField, RdfSetField, RdfBooleanField, \
+    RdfIntegerField, RdfFloatField, RdfDateTimeField, RdfDateField, RdfTimeField, RdfUuidField
 
 
 class FieldTypeMappingError(ValueError):
@@ -42,13 +43,17 @@ def from_object_field(field, predicate):
     return ret
 
 
-def from_boolean_field(field, predicate):
-    ret = RdfBooleanField
-
 FIELD_MAP = {
     r2dto.fields.StringField: from_string_field,
     r2dto.fields.ListField: from_list_field,
     r2dto.fields.ObjectField: from_object_field,
+    r2dto.fields.BooleanField: lambda field, predicate: RdfBooleanField(predicate, field.required),
+    r2dto.fields.IntegerField: lambda field, predicate: RdfIntegerField(predicate, field.required),
+    r2dto.fields.FloatField: lambda field, predicate: RdfFloatField(predicate, field.required),
+    r2dto.fields.DateTimeField: lambda field, predicate: RdfDateTimeField(predicate, field.required),
+    r2dto.fields.DateField: lambda field, predicate: RdfDateField(predicate, field.required),
+    r2dto.fields.TimeField: lambda field, predicate: RdfTimeField(predicate, field.required),
+    r2dto.fields.UuidField: lambda field, predicate: RdfUuidField(predicate, field.required),
 }
 
 
