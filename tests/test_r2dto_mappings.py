@@ -1,9 +1,12 @@
+from __future__ import unicode_literals
+
 import unittest
+
 import r2dto
 
-from r2dto_rdf import RdfSerializer, RdfIriField, RdfStringField, RdfObjectField, RdfSetField, \
-    create_rdf_serializer_from_r2dto_serializer
-from tests.utils import RdflibTestCaseMixin, print_graph
+from r2dto_rdf import create_rdf_serializer_from_r2dto_serializer
+
+from tests.utils import RdflibTestCaseMixin, print_graph, get_triples
 
 
 class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
@@ -97,9 +100,12 @@ class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
         s = RdfModelSerializer(object=m)
         s.validate()
         g = s.build_graph()
-        self.assert_triple(g, "http://api.nickswebsite.net/data#1", "http://api.nickswebsite.net/ns/sub-field", "Some Field")
+        self.assert_triple(g,
+                           "http://api.nickswebsite.net/data#1",
+                           "http://api.nickswebsite.net/ns/sub-field",
+                           "Some Field")
 
-    def xtest_object_list_fields(self):
+    def test_object_list_fields(self):
         class SubModel(object):
             def __init__(self, field):
                 self.field = field
@@ -107,6 +113,7 @@ class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
         class Model(object):
             def __init__(self, *args):
                 self.fields = [SubModel(arg) for arg in args]
+                self.id = "http://api.nickswebsite.net/data#1"
 
         class SubModelSerializer(r2dto.Serializer):
             field = r2dto.fields.StringField()
@@ -119,27 +126,31 @@ class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
             class Rdf:
                 field = "nws:field"
 
-        class ModelSerailzer(r2dto.Serializer):
+        class ModelSerializer(r2dto.Serializer):
             fields = r2dto.fields.ListField(r2dto.fields.ObjectField(SubModelSerializer))
 
             class Meta:
                 rdf_prefixes = {
                     "nws": "http://api.nickswebsite.net/ns/",
                 }
+                rdf_subject = "id"
 
             class Rdf:
-                fields = RdfSetField(
-                        create_rdf_serializer_from_r2dto_serializer(SubModelSerializer),
-                        predicate="nws:fields",
-                )
+                fields = "nws:fields"
 
-        RdfModelSerializer = create_rdf_serializer_from_r2dto_serializer(ModelSerailzer)
+        RdfModelSerializer = create_rdf_serializer_from_r2dto_serializer(ModelSerializer)
 
-        m = Model()
+        m = Model("One", "Two")
         s = RdfModelSerializer(object=m)
         g = s.build_graph()
-        """
-        nws-d:3
-        """
-        print_graph(g)
+        ###
+        # @prefix nws: <http://api.nickswebsite.net/
+        #
+        # nws:data#1 nws:ns/fields [ nws:field "One" ],
+        #                          [ nws:field "Two" ] .
+        model_triples = get_triples(g, m.id, "http://api.nickswebsite.net/ns/fields", None)
+        self.assertEqual(2, len(model_triples))
 
+        submodel_triples_a = get_triples(g, model_triples[0][2], "http://api.nickswebsite.net/ns/field", None)
+        submodel_triples_b = get_triples(g, model_triples[1][2], "http://api.nickswebsite.net/ns/field", None)
+        self.assertEqual({"One", "Two"}, {submodel_triples_a[0][2].value, submodel_triples_b[0][2].value})

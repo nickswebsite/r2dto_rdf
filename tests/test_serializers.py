@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 import unittest
-import rdflib
+
+from rdflib import URIRef
 
 from r2dto_rdf import RdfSerializer, RdfIriField, RdfStringField, RdfObjectField, RdfSetField
 
@@ -195,7 +196,7 @@ class SerializerTests(RdflibTestCaseMixin, unittest.TestCase):
         s.validate()
         g = s.build_graph()
         triples = list(get_triples(g, model.id, "http://api.nickswebsite.net/ns/link", None))
-        self.assertEqual(rdflib.URIRef(model.link), triples[0][-1])
+        self.assertEqual(URIRef(model.link), triples[0][-1])
 
     def test_objects_in_lists(self):
         class SubModel(object):
