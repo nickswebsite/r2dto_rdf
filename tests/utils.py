@@ -6,6 +6,12 @@ from rdflib.term import Identifier
 from pprint import pprint
 
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
+
 def print_graph(g):
     print(g.serialize(format="turtle"))
     pprint(list(g))

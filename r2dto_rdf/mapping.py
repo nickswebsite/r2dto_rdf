@@ -103,4 +103,5 @@ def create_rdf_serializer_from_r2dto_serializer(serializer_class):
     for field in rdf_fields:
         attrs[field.object_field_name] = field
     attrs.update(overrides)
-    return RdfSerializerMetaclass(b"Rdf" + serializer_class.__name__, (RdfSerializer,), attrs)
+    # Cast 'Rdf' prefix to string to make it compatible with both python 2 and 3
+    return RdfSerializerMetaclass(str("Rdf") + serializer_class.__name__, (RdfSerializer,), attrs)
