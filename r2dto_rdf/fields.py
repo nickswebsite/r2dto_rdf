@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import datetime
 try:
     import urlparse
 except ImportError:
@@ -213,3 +214,54 @@ class RdfDateTimeField(RdfField):
             self.datetime_field.object_to_data(obj)
         except r2dto.InvalidTypeValidationError as ex:
             raise ValidationError(ex.errors)
+
+
+class RdfDateField(RdfField):
+    datatype = "http://www.w3.org/2001/XMLSchema#date"
+
+    def __init__(self, predicate, required=False, validators=None):
+        super(RdfDateField, self).__init__(predicate, required, validators=validators)
+        self.date_field = r2dto.fields.DateField(validators=validators)
+
+    def validate(self, obj):
+        try:
+            self.date_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)
+
+    def render(self, obj):
+        return datetime.date(*obj.timetuple()[:3])
+
+
+class RdfTimeField(RdfField):
+    datatype = "http://www.w3.org/2001/XMLSchema#time"
+
+    def __init__(self, predicate, required=False, validators=None):
+        super(RdfTimeField, self).__init__(predicate, required, validators=validators)
+        self.time_field = r2dto.fields.TimeField()
+
+    def validate(self, obj):
+        try:
+            self.time_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)
+
+
+class RdfUuidField(RdfField):
+    def __init__(self, predicate, required=False, validators=None, iri=False):
+        super(RdfUuidField, self).__init__(predicate, required, validators=validators)
+        self.iri = iri
+        self.datatype = "@id"
+
+    def validate(self, obj):
+        if not isinstance(obj, uuid.UUID):
+            try:
+                uuid.UUID(str(obj))
+            except ValueError:
+                raise ValidationError("{} is expected to be a UUID, got {}".format(self.object_field_name, type(obj)))
+
+    def render(self, obj):
+        if self.iri:
+            return "urn:uuid:{}".format(str(obj))
+        else:
+            return str(obj)
