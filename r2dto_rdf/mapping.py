@@ -1,6 +1,8 @@
+from __future__ import unicode_literals
+
 import r2dto
 
-from r2dto_rdf.serializer import BaseRdfSerializer, RdfSerializerMetaclass, RdfSerializer
+from r2dto_rdf.serializer import RdfSerializerMetaclass, RdfSerializer
 from r2dto_rdf.fields import RdfField, RdfIriField, RdfObjectField, RdfStringField, RdfSetField
 
 

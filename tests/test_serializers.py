@@ -6,7 +6,7 @@ from rdflib import URIRef
 
 from r2dto_rdf import RdfSerializer, RdfIriField, RdfStringField, RdfObjectField, RdfSetField
 
-from tests.utils import RdflibTestCaseMixin, print_graph, get_triples
+from tests.utils import RdflibTestCaseMixin, get_triples
 
 
 class SerializerTests(RdflibTestCaseMixin, unittest.TestCase):

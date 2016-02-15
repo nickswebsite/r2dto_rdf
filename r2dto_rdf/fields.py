@@ -1,9 +1,12 @@
+from __future__ import unicode_literals
+
 import urlparse
 import uuid
 
 import r2dto
-from r2dto import ValidationError
-import rdflib
+from rdflib import Graph, BNode, Literal
+
+from r2dto_rdf.errors import ValidationError
 
 
 def is_iri(iri):
@@ -137,11 +140,11 @@ class RdfSetField(RdfField):
 
     def build_graph(self, obj, subject):
         if not subject:
-            subject_node = rdflib.BNode("_:" + uuid.uuid4().hex)
+            subject_node = BNode("_:" + uuid.uuid4().hex)
         else:
             subject_node = subject
 
-        g = rdflib.Graph()
+        g = Graph()
         field = self.allowed_type
         for item in obj:
             if hasattr(field, "build_graph"):
@@ -149,7 +152,7 @@ class RdfSetField(RdfField):
                     subobject_graph = field.build_graph(item, subject_node)
                 else:
                     blank_node_name = "_:" + uuid.uuid4().hex
-                    blank_node = rdflib.BNode(blank_node_name)
+                    blank_node = BNode(blank_node_name)
                     subobject_graph = field.build_graph(item, blank_node)
                     predicate = self.parent.namespace_manager.resolve_term(self.predicate)
                     g.add((subject_node, predicate, blank_node))
@@ -161,7 +164,7 @@ class RdfSetField(RdfField):
                     data_type = self.parent.namespace_manager.resolve_term(field.datatype)
 
                 raw_data = field.render(item)
-                data = rdflib.Literal(raw_data, field.language, data_type)
+                data = Literal(raw_data, field.language, data_type)
                 g.add((subject, predicate, data))
 
         return g

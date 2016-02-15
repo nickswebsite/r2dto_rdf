@@ -1,9 +1,12 @@
-import r2dto
-from r2dto import ValidationError
-import rdflib
+from __future__ import unicode_literals
+
 import uuid
 
+import r2dto
+from rdflib import Namespace, URIRef, BNode, Graph, Literal
+
 from r2dto_rdf.fields import RdfField, RdfIriField
+from r2dto_rdf.errors import ValidationError
 
 
 def split_prefix(raw, prefixes=None):
@@ -20,7 +23,7 @@ class RdflibNamespaceManager(object):
         self.namespaces = {}
 
     def bind(self, prefix, uri):
-        ns = rdflib.Namespace(uri)
+        ns = Namespace(uri)
         self.namespaces[prefix] = ns
         return ns
 
@@ -29,7 +32,7 @@ class RdflibNamespaceManager(object):
         if prefix:
             return self.namespaces[prefix][postfix]
         else:
-            return rdflib.URIRef(postfix)
+            return URIRef(postfix)
 
     def __getitem__(self, item):
         return self.namespaces[item]
@@ -146,14 +149,14 @@ class BaseRdfSerializer(object):
             subject_field = None
             subject_iri = subject
 
-        g = rdflib.Graph()
+        g = Graph()
         for k, v in self.namespace_manager.namespaces.items():
             g.bind(k, v)
 
         if subject_iri.startswith("_:"):
-            subject_node = rdflib.BNode(subject_iri)
+            subject_node = BNode(subject_iri)
         else:
-            subject_node = rdflib.URIRef(subject_iri)
+            subject_node = URIRef(subject_iri)
 
         predicate_fields = [field for field in self.fields if field is not subject_field]
         for field in predicate_fields:
@@ -163,7 +166,7 @@ class BaseRdfSerializer(object):
                     subobject_graph = field.build_graph(obj, subject_node)
                 else:
                     blank_node_name = "_:" + uuid.uuid4().hex
-                    blank_node = rdflib.BNode(blank_node_name)
+                    blank_node = BNode(blank_node_name)
                     subobject_graph = field.build_graph(obj, blank_node)
                     predicate = self.namespace_manager.resolve_term(field.predicate)
                     g.add((subject_node, predicate, blank_node))
@@ -177,9 +180,9 @@ class BaseRdfSerializer(object):
                     data_type = self.namespace_manager.resolve_term(field.datatype)
 
                 if field.datatype == "@id":
-                    data = rdflib.URIRef(raw_data)
+                    data = URIRef(raw_data)
                 else:
-                    data = rdflib.Literal(raw_data, field.language, data_type)
+                    data = Literal(raw_data, field.language, data_type)
 
                 g.add((subject_node, predicate, data))
 

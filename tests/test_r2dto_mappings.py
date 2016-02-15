@@ -6,7 +6,7 @@ import r2dto
 
 from r2dto_rdf import create_rdf_serializer_from_r2dto_serializer
 
-from tests.utils import RdflibTestCaseMixin, print_graph, get_triples
+from tests.utils import RdflibTestCaseMixin, get_triples
 
 
 class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
