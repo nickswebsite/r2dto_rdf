@@ -64,17 +64,17 @@ def predicate_satisfied(field):
     return True
 
 
-def create_rdf_serializer_from_r2dto_serializer(serializer_class):
+def create_rdf_serializer_from_r2dto_serializer(serializer_class, rdf=None):
     options = serializer_class.options
     if not options:
         raise ValueError("Meta class MUST be defined.")
     if not hasattr(options, "rdf_subject"):
         options.rdf_subject = None
 
-    rdf = getattr(serializer_class, "Rdf", None)
     if not rdf:
-        raise ValueError("An Rdf class MUST be defined on the serializer.")
-
+        rdf = getattr(serializer_class, "Rdf", None)
+        if not rdf:
+            raise ValueError("An Rdf class MUST be defined on the serializer.")
     overrides = {}
     for name, attr in vars(rdf).items():
         if isinstance(attr, RdfField):

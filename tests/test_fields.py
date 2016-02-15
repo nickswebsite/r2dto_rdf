@@ -76,8 +76,8 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, True)
 
     def test_list_field(self):
-        s = URIRef("http://api.nickswebsite.net/data#1")
-        p = "http://api.transparent.com/list-item"
+        subject = URIRef("http://api.nickswebsite.net/data#1")
+        p = "http://api.nickswebsite.net/list-item"
 
         f = RdfSetField(RdfStringField(), predicate=p)
 
@@ -89,16 +89,16 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         f.validate(["A", "B", "C"])
         self.assertRaises(ValidationError, f.validate, ["A", 2, "C"])
 
-        g = f.build_graph(["A", "B", "C"], s)
-        self.assert_triple(g, s, p, "A")
-        self.assert_triple(g, s, p, "B")
-        self.assert_triple(g, s, p, "C")
+        g = f.build_graph(["A", "B", "C"], subject)
+        self.assert_triple(g, subject, p, "A")
+        self.assert_triple(g, subject, p, "B")
+        self.assert_triple(g, subject, p, "C")
 
     def test_object_field_collapsed(self):
-        s = URIRef("http://api.nickswebsite.net/data#2")
+        subject = URIRef("http://api.nickswebsite.net/data#2")
 
         class S(RdfSerializer):
-            field = RdfStringField(predicate="http://api.transparent.com/ns/field")
+            field = RdfStringField(predicate="http://api.nickswebsite.net/ns/field")
 
         class M(object):
             def __init__(self):
@@ -106,42 +106,42 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
 
         f = RdfObjectField(S, collapse=True)
 
-        im = M()
-        im.field = 3
-        self.assertRaises(ValidationError, f.validate, im)
+        invalid_model = M()
+        invalid_model.field = 3
+        self.assertRaises(ValidationError, f.validate, invalid_model)
 
-        m = M()
-        f.validate(m)
+        valid_model = M()
+        f.validate(valid_model)
 
-        g = f.build_graph(m, s)
-        self.assert_triple(g, s, "http://api.transparent.com/ns/field", "Some Field")
+        g = f.build_graph(valid_model, subject)
+        self.assert_triple(g, subject, "http://api.nickswebsite.net/ns/field", "Some Field")
 
     def test_object_field_not_collapsed(self):
-        s = URIRef("http://api.nickswebsite.net/data#2")
-        p = "http://api.transparent.com/object-item"
-        fp = "http://api.transparent.com/ns/field"
+        subject = URIRef("http://api.nickswebsite.net/data#2")
+        object_predicate = "http://api.nickswebsite.net/object-item"
+        field_predicate = "http://api.nickswebsite.net/ns/field"
 
-        class S(RdfSerializer):
-            field = RdfStringField(predicate=fp)
+        class ModelSerializer(RdfSerializer):
+            field = RdfStringField(predicate=field_predicate)
 
-        class M(object):
+        class Model(object):
             def __init__(self):
                 self.field = "Some Field"
 
-        f = RdfObjectField(S, predicate=p, collapse=False)
+        f = RdfObjectField(ModelSerializer, predicate=object_predicate, collapse=False)
 
-        im = M()
-        im.field = 3
-        self.assertRaises(ValidationError, f.validate, im)
+        invalid_model = Model()
+        invalid_model.field = 3
+        self.assertRaises(ValidationError, f.validate, invalid_model)
 
-        m = M()
-        f.validate(m)
+        valid_model = Model()
+        f.validate(valid_model)
 
-        g = f.build_graph(m, s)
-        self.assert_triple(g, s, "http://api.transparent.com/ns/field", "Some Field")
+        g = f.build_graph(valid_model, subject)
+        self.assert_triple(g, subject, "http://api.nickswebsite.net/ns/field", "Some Field")
 
     def test_datetime_field(self):
-        f = RdfDateTimeField("http://api.nws#1")
+        f = RdfDateTimeField("http://api.nickswebsite.net/ns/1")
 
         expected = datetime.datetime(2014, 2, 1, 3, 5)
         self.assertEqual(expected, f.render(expected))
@@ -152,7 +152,7 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, 123)
 
     def test_date_field(self):
-        f = RdfDateField("http://api.nws#dt")
+        f = RdfDateField("http://api.nickswebsite.net/ns/date")
 
         expected = datetime.date(2014, 2, 1)
         self.assertEqual(expected, f.render(expected))
@@ -168,7 +168,7 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, True)
 
     def test_time_field(self):
-        f = RdfTimeField("http://api.nws#dt")
+        f = RdfTimeField("http://api.nickswebsite.net#dt")
 
         expected = datetime.time(2, 1, 3)
         self.assertEqual(expected, f.render(expected))
@@ -182,7 +182,7 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, datetime.date(2012, 6, 12))
 
     def test_uuid_field(self):
-        f = RdfUuidField("http://api.nws#dt")
+        f = RdfUuidField("http://api.nickswebsite.net/ns/data-type")
         self.assertNotEqual("@id", f.datatype)
 
         expected = uuid.uuid4()
@@ -195,22 +195,22 @@ class FieldTests(RdflibTestCaseMixin, unittest.TestCase):
         self.assertRaises(ValidationError, f.validate, "xyz")
         self.assertRaises(ValidationError, f.validate, True)
 
-        iri_field = RdfUuidField("http://api.nws#dt", iri=True)
+        iri_field = RdfUuidField("http://api.nickswebsite.net/ns/data-type", iri=True)
         self.assertEqual(iri_field.datatype, "@id")
 
         test = "4e0b25c1-0792-4e7d-89b5-fe26460dff5b"
         self.assertEqual("urn:uuid:{}".format(test), iri_field.render(uuid.UUID(test)))
 
         # Make sure that the serializers will parse this correctly
-        class S(RdfSerializer):
-            f = RdfUuidField("http://api.nws#1", iri=True)
+        class ModelSerializer(RdfSerializer):
+            f = RdfUuidField("http://api.nickswebsite.net/data#1", iri=True)
 
-        class M(object):
+        class Model(object):
             def __init__(self):
                 self.f = uuid.uuid4()
 
-        m = M()
-        s = S(object=m)
+        m = Model()
+        s = ModelSerializer(object=m)
         g = s.build_graph()
-        t = get_triples(g, None, "http://api.nws#1", None)
+        t = get_triples(g, None, "http://api.nickswebsite.net/data#1", None)
         self.assertEqual(URIRef("urn:uuid:{}".format(m.f)), t[0][-1])
