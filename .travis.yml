@@ -6,5 +6,5 @@ python:
 - "pypy"
 - "pypy3"
 install:
-- pip install pep8
+- pip install pep8 r2dto rdflib
 script: python -m tests

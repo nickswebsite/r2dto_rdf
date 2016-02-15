@@ -2,7 +2,7 @@
 Package to convert arbitrary python objects into DTOs ready for serialization and validation.
 """
 
-__version__ = "0.0.3"
+__version__ = "0.0.0"
 
 from setuptools import setup, find_packages, Command
 
@@ -37,10 +37,10 @@ class DocsCommand(Command):
 
 
 setup(
-    name="r2dto",
+    name="r2dto_rdf",
     author="The Magnificant Nick",
     author_email="send_me_spam@yahoo.com",
-    url="https://github.com/nickswebsite/r2dto",
+    url="https://github.com/nickswebsite/r2dto_rdf",
     version=__version__,
     description=__doc__,
     keywords="dto serializer serialize REST marshal JSON",
