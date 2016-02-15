@@ -75,7 +75,10 @@ class RdfStringField(RdfField):
         self.datatype = datatype
 
     def validate(self, obj):
-        self.string_field.object_to_data(obj)
+        try:
+            self.string_field.object_to_data(obj)
+        except r2dto.InvalidTypeValidationError as ex:
+            raise ValidationError(ex.errors)
 
     @property
     def validators(self):
@@ -135,7 +138,7 @@ class RdfSetField(RdfField):
                 self.allowed_type.validate(item)
             except ValidationError as ex:
                 field_path = str(self.parent)
-                errors.append("{}.{}[{}] error processing".format(field_path, self.object_field_name),)
+                errors.append("{}.{}[{}] error processing".format(field_path, self.object_field_name, item_i),)
                 errors.extend(ex.errors)
 
         if errors:
@@ -168,6 +171,6 @@ class RdfSetField(RdfField):
 
                 raw_data = field.render(item)
                 data = Literal(raw_data, field.language, data_type)
-                g.add((subject, predicate, data))
+                g.add((subject_node, predicate, data))
 
         return g

@@ -16,7 +16,7 @@ PEP8_EXCLUDES = (
 
 from tests.test_serializers import SerializerTests
 from tests.test_r2dto_mappings import R2DtoMappingTests
-
+from tests.test_fields import FieldTests
 
 if __name__ == "__main__":
     pep8_sources = glob.glob("**/*.py") + glob.glob("tests/*.py") + glob.glob("r2dto_rdf/*.py")
