@@ -2,7 +2,7 @@
 Package to convert arbitrary python objects into DTOs ready for serialization and validation.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from setuptools import setup, find_packages, Command
 
@@ -48,7 +48,8 @@ setup(
         "docs": DocsCommand,
     },
     classifiers=CLASSIFIERS,
-    install_required=(
+    install_requires=(
         "rdflib",
+        "r2dto>=0.0.2",
     )
 )
