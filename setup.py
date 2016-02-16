@@ -2,7 +2,7 @@
 Package to convert arbitrary python objects into DTOs ready for serialization and validation.
 """
 
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 from setuptools import setup, find_packages, Command
 
@@ -35,7 +35,6 @@ class DocsCommand(Command):
     def run(self):
         mkdocs_main("build", (), {"clean": True})
 
-
 setup(
     name="r2dto_rdf",
     author="The Magnificant Nick",
@@ -44,9 +43,12 @@ setup(
     version=__version__,
     description=__doc__,
     keywords="dto serializer serialize REST marshal JSON",
-    packages=find_packages(exclude=["test/"]),
+    packages=["r2dto_rdf"],
     cmdclass={
         "docs": DocsCommand,
     },
     classifiers=CLASSIFIERS,
+    install_required=(
+        "rdflib",
+    )
 )
