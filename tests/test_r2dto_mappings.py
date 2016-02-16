@@ -6,7 +6,7 @@ import uuid
 
 import r2dto
 
-from r2dto_rdf import create_rdf_serializer_from_r2dto_serializer, RdfUuidField
+from r2dto_rdf import RdfR2DtoSerializer, create_rdf_serializer_from_r2dto_serializer, RdfUuidField
 
 from tests.utils import RdflibTestCaseMixin, get_triples
 
@@ -176,7 +176,7 @@ class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
             datetime = r2dto.fields.DateTimeField()
             date = r2dto.fields.DateField()
             time = r2dto.fields.TimeField()
-            # uuid_iri = r2dto.fields.UuidField()
+            uuid_iri = r2dto.fields.UuidField()
             integer = r2dto.fields.IntegerField()
             float = r2dto.fields.FloatField()
             string = r2dto.fields.StringField()
@@ -188,57 +188,96 @@ class R2DtoMappingTests(RdflibTestCaseMixin, unittest.TestCase):
                     "nws": "http://api.nickswebsite.net/"
                 }
 
-            class Rdf:
-                uuid_iri = RdfUuidField(predicate="nws:ns/uuid", iri=True)
-                uuid = "nws:ns/uuid"
-                datetime = "nws:ns/date-time"
-                date = "nws:ns/date"
-                time = "nws:ns/time"
-                integer = "nws:ns/integer"
-                float = "nws:ns/float"
-                string = "nws:ns/string"
-                boolean = "nws:ns/boolean"
+        class Rdf:
+            uuid_iri = RdfUuidField(predicate="nws:ns/uuid", iri=True)
+            uuid = "nws:ns/uuid"
+            datetime = "nws:ns/date-time"
+            date = "nws:ns/date"
+            time = "nws:ns/time"
+            integer = "nws:ns/integer"
+            float = "nws:ns/float"
+            string = "nws:ns/string"
+            boolean = "nws:ns/boolean"
 
-        RdfModelSerializer = create_rdf_serializer_from_r2dto_serializer(ModelSerializer)
+        def create_serializer_with_rdf_class():
+            ModelSerializer.Rdf = Rdf
+            res = create_rdf_serializer_from_r2dto_serializer(ModelSerializer)
+            del ModelSerializer.Rdf
+            return res
+
+        def create_serializer_with_rdf_parameter():
+            return create_rdf_serializer_from_r2dto_serializer(ModelSerializer, Rdf)
+
+        for create_serializer in (create_serializer_with_rdf_parameter, create_serializer_with_rdf_class):
+            RdfModelSerializer = create_serializer()
+
+            m = Model()
+            s = RdfModelSerializer(object=m)
+            s.validate()
+            g = s.build_graph()
+
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/string"),
+                               m.string)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/boolean"),
+                               m.boolean)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/integer"),
+                               m.integer)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/float"),
+                               m.float)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/date-time"),
+                               m.datetime)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/date"),
+                               m.date)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/time"),
+                               m.time)
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/uuid"),
+                               str(m.uuid))
+            self.assert_triple(g,
+                               m.id,
+                               s.namespace_manager.resolve_term("nws:ns/uuid"),
+                               "urn:uuid:" + str(m.uuid_iri))
+
+    def test_rdf_r2dto_serializer(self):
+        class Model(object):
+            def __init__(self):
+                self.field = "Some Field"
+                self.id = "http://api.nickswebsite.net/data#1"
+
+        class ModelSerializer(r2dto.Serializer):
+            field = r2dto.fields.StringField()
+
+            class Meta:
+                model = Model
+
+        class ModelRdfSerializer(RdfR2DtoSerializer):
+            class Meta:
+                serializer_class = ModelSerializer
+                rdf_subject = "id"
+                rdf_prefixes = {
+                    "nws": "http://api.nickswebsite.net/"
+                }
+
+            class Rdf:
+                field = "nws:field"
 
         m = Model()
-        s = RdfModelSerializer(object=m)
-        s.validate()
+        s = ModelRdfSerializer(object=m)
         g = s.build_graph()
 
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/string"),
-                           m.string)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/boolean"),
-                           m.boolean)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/integer"),
-                           m.integer)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/float"),
-                           m.float)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/date-time"),
-                           m.datetime)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/date"),
-                           m.date)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/time"),
-                           m.time)
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/uuid"),
-                           str(m.uuid))
-        self.assert_triple(g,
-                           m.id,
-                           s.namespace_manager.resolve_term("nws:ns/uuid"),
-                           "urn:uuid:" + str(m.uuid_iri))
+        self.assert_triple(g, m.id, s.namespace_manager.resolve_term("nws:field"), "Some Field")
