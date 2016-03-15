@@ -172,7 +172,7 @@ class RdfSetField(RdfField):
 
     def build_graph(self, obj, subject):
         if not subject:
-            subject_node = BNode("_:" + uuid.uuid4().hex)
+            subject_node = BNode(uuid.uuid4().hex)
         else:
             subject_node = subject
 
@@ -183,7 +183,7 @@ class RdfSetField(RdfField):
                 if field.collapse:
                     subobject_graph = field.build_graph(item, subject_node)
                 else:
-                    blank_node_name = "_:" + uuid.uuid4().hex
+                    blank_node_name = uuid.uuid4().hex
                     blank_node = BNode(blank_node_name)
                     subobject_graph = field.build_graph(item, blank_node)
                     predicate = self.parent.namespace_manager.resolve_term(self.predicate)

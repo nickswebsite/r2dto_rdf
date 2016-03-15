@@ -4,6 +4,7 @@ import uuid
 
 import r2dto
 from rdflib import Namespace, URIRef, BNode, Graph, Literal
+from rdflib.term import Node
 
 from r2dto_rdf.fields import RdfField, RdfIriField
 from r2dto_rdf.errors import ValidationError
@@ -143,18 +144,23 @@ class BaseRdfSerializer(object):
                 subject_iri = subject_field.render(subject_attr_data)
             else:
                 subject_iri = "_:" + uuid.uuid4().hex
+            subject_node = None
         else:
+            if isinstance(subject, Node):
+                subject_node = subject
+            else:
+                subject_node = None
             subject_field = None
             subject_iri = subject
 
         g = Graph()
         for k, v in self.namespace_manager.namespaces.items():
             g.bind(k, v)
-
-        if subject_iri.startswith("_:"):
-            subject_node = BNode(subject_iri)
-        else:
-            subject_node = URIRef(subject_iri)
+        if subject_node is None:
+            if subject_iri.startswith("_:"):
+                subject_node = BNode(subject_iri)
+            else:
+                subject_node = URIRef(subject_iri)
 
         predicate_fields = [field for field in self.fields if field is not subject_field]
         for field in predicate_fields:
