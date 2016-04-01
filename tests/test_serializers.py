@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from rdflib import URIRef
+from rdflib import URIRef, RDF 
 
 from r2dto_rdf import RdfSerializer, RdfIriField, RdfStringField, RdfObjectField, RdfSetField
 
@@ -27,6 +27,7 @@ class SerializerTests(RdflibTestCaseMixin, unittest.TestCase):
                     "nws-data": "http://api.nickswebsite.net/data#"
                 }
                 rdf_subject = "id"
+                rdf_type = "nws:Type"
 
         m = Model()
         s = ModelSerializer(object=m)
@@ -37,6 +38,11 @@ class SerializerTests(RdflibTestCaseMixin, unittest.TestCase):
                            "http://api.nickswebsite.net/data#1",
                            "http://api.nickswebsite.net/ns/field",
                            "xyz")
+
+        self.assert_triple(g,
+                           "http://api.nickswebsite.net/data#1",
+                           RDF.type,
+                           "http://api.nickswebsite.net/ns/Type")
 
     def test_data_types(self):
         class Model(object):
