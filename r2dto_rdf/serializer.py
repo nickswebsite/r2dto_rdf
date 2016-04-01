@@ -3,12 +3,11 @@ from __future__ import unicode_literals
 import uuid
 
 import r2dto
-from rdflib import Namespace, URIRef, BNode, Graph, Literal
+from rdflib import Namespace, URIRef, BNode, Graph, Literal, RDF
 from rdflib.term import Node
 
 from r2dto_rdf.fields import RdfField, RdfIriField
 from r2dto_rdf.errors import ValidationError
-from sparqlquery import is_a
 
 
 def split_prefix(raw, prefixes=None):
@@ -194,7 +193,7 @@ class BaseRdfSerializer(object):
 
                 g.add((subject_node, predicate, data))
         if self.options.rdf_type:
-            g.add((subject_node, is_a, self.namespace_manager.resolve_term(self.options.rdf_type)))
+            g.add((subject_node, RDF.type, self.namespace_manager.resolve_term(self.options.rdf_type)))
 
         return g
 
