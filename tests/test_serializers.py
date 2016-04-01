@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from rdflib import URIRef, RDF 
+from rdflib import URIRef, RDF
 
 from r2dto_rdf import RdfSerializer, RdfIriField, RdfStringField, RdfObjectField, RdfSetField
 
