@@ -8,6 +8,7 @@ from rdflib.term import Node
 
 from r2dto_rdf.fields import RdfField, RdfIriField
 from r2dto_rdf.errors import ValidationError
+from sparqlquery import is_a
 
 
 def split_prefix(raw, prefixes=None):
@@ -69,6 +70,9 @@ class RdfSerializerMetaclass(type):
 
         if not hasattr(options, "rdf_prefixes"):
             options.rdf_prefixes = {}
+
+        if not hasattr(options, "rdf_type"):
+            options.rdf_type = None
 
         namespace_manager = RdflibNamespaceManager()
         for k, v in options.rdf_prefixes.items():
@@ -189,6 +193,8 @@ class BaseRdfSerializer(object):
                     data = Literal(raw_data, field.language, data_type)
 
                 g.add((subject_node, predicate, data))
+        if self.options.rdf_type:
+            g.add((subject_node, is_a, self.namespace_manager.resolve_term(self.options.rdf_type)))
 
         return g
 
