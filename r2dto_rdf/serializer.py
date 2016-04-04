@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import uuid
 
 import r2dto
-from rdflib import Namespace, URIRef, BNode, Graph, Literal
+from rdflib import Namespace, URIRef, BNode, Graph, Literal, RDF
 from rdflib.term import Node
 
 from r2dto_rdf.fields import RdfField, RdfIriField
@@ -69,6 +69,9 @@ class RdfSerializerMetaclass(type):
 
         if not hasattr(options, "rdf_prefixes"):
             options.rdf_prefixes = {}
+
+        if not hasattr(options, "rdf_type"):
+            options.rdf_type = None
 
         namespace_manager = RdflibNamespaceManager()
         for k, v in options.rdf_prefixes.items():
@@ -189,6 +192,8 @@ class BaseRdfSerializer(object):
                     data = Literal(raw_data, field.language, data_type)
 
                 g.add((subject_node, predicate, data))
+        if self.options.rdf_type:
+            g.add((subject_node, RDF.type, self.namespace_manager.resolve_term(self.options.rdf_type)))
 
         return g
 
