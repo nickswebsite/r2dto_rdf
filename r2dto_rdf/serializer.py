@@ -168,31 +168,30 @@ class BaseRdfSerializer(object):
         predicate_fields = [field for field in self.fields if field is not subject_field]
         for field in predicate_fields:
             obj = getattr(self.object, field.object_field_name)
-            if obj:
-                if hasattr(field, "build_graph"):
-                    if field.collapse:
-                        subobject_graph = field.build_graph(obj, subject_node)
-                    else:
-                        blank_node_name = uuid.uuid4().hex
-                        blank_node = BNode(blank_node_name)
-                        subobject_graph = field.build_graph(obj, blank_node)
-                        predicate = self.namespace_manager.resolve_term(field.predicate)
-                        g.add((subject_node, predicate, blank_node))
-                    g += subobject_graph
+            if hasattr(field, "build_graph"):
+                if field.collapse:
+                    subobject_graph = field.build_graph(obj, subject_node)
                 else:
+                    blank_node_name = "_:" + uuid.uuid4().hex
+                    blank_node = BNode(blank_node_name)
+                    subobject_graph = field.build_graph(obj, blank_node)
                     predicate = self.namespace_manager.resolve_term(field.predicate)
-                    raw_data = field.render(getattr(self.object, field.object_field_name))
+                    g.add((subject_node, predicate, blank_node))
+                g += subobject_graph
+            else:
+                predicate = self.namespace_manager.resolve_term(field.predicate)
+                raw_data = field.render(getattr(self.object, field.object_field_name))
 
-                    data_type = None
-                    if field.datatype and field.datatype[0] != "@":
-                        data_type = self.namespace_manager.resolve_term(field.datatype)
+                data_type = None
+                if field.datatype and field.datatype[0] != "@":
+                    data_type = self.namespace_manager.resolve_term(field.datatype)
 
-                    if field.datatype == "@id":
-                        data = URIRef(raw_data)
-                    else:
-                        data = Literal(raw_data, field.language, data_type)
+                if field.datatype == "@id":
+                    data = URIRef(raw_data)
+                else:
+                    data = Literal(raw_data, field.language, data_type)
 
-                    g.add((subject_node, predicate, data))
+                g.add((subject_node, predicate, data))
         if self.options.rdf_type:
             g.add((subject_node, RDF.type, self.namespace_manager.resolve_term(self.options.rdf_type)))
 
