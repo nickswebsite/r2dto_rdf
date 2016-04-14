@@ -132,12 +132,14 @@ class RdfObjectField(RdfField):
             return "serializer_class MUST have a 'build_graph' attribute."
 
     def validate(self, obj):
-        s = self.serializer_class(object=obj)
-        s.validate()
+        if obj:
+            s = self.serializer_class(object=obj)
+            s.validate()
 
     def build_graph(self, obj, subject):
-        s = self.serializer_class(object=obj)
-        return s.build_graph(subject)
+        if obj:
+            s = self.serializer_class(object=obj)
+            return s.build_graph(subject)
 
 
 class RdfSetField(RdfField):
