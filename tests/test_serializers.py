@@ -242,3 +242,28 @@ class SerializerTests(RdflibTestCaseMixin, unittest.TestCase):
         submodel_triples_a = get_triples(g, model_triples[0][2], "http://api.nickswebsite.net/ns/value", None)
         submodel_triples_b = get_triples(g, model_triples[1][2], "http://api.nickswebsite.net/ns/value", None)
         self.assertEqual({"One", "Two"}, {submodel_triples_a[0][2].value, submodel_triples_b[0][2].value})
+
+    def test_non_required_none_fields(self):
+        class Model(object):
+            def __init__(self):
+                self.prop = "value"
+                self.none = None
+                self.id = "http://api.nickswebsite.net/data#9"
+
+        class ModelSerializer(RdfSerializer):
+            prop = RdfStringField(predicate="http://api.nickswebsite.net/ns/prop")
+            none = RdfIriField(predicate="http://api.nickswebsite.net/ns/none", required=False)
+
+            class Meta:
+                rdf_subject = "id"
+
+        m = Model()
+        s = ModelSerializer(object=m)
+        s.validate()
+        g = s.build_graph()
+
+        prop_triples = get_triples(g, m.id, "http://api.nickswebsite.net/ns/prop", None)
+        self.assertEqual(1, len(prop_triples))
+        self.assertEqual(m.prop, prop_triples[0][-1].toPython())
+        none_triples = get_triples(g, m.id, "http://api.nickswebsite.net/ns/none", None)
+        self.assertEqual(0, len(none_triples))

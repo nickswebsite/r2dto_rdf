@@ -111,11 +111,11 @@ class BaseRdfSerializer(object):
             if field.required:
                 if not hasattr(self.object, field.object_field_name):
                     errors.append("Field {} is missing from object.".format(field.object_field_name))
-                elif not getattr(self.object, field.object_field_name):
+                elif getattr(self.object, field.object_field_name) is None:
                     errors.append("Field {} cannot be None.".format(field.object_field_name))
 
-            if hasattr(self.object, field.object_field_name):
-                data = getattr(self.object, field.object_field_name)
+            data = getattr(self.object, field.object_field_name, None)
+            if data is not None:
                 try:
                     field.validate(data)
                 except ValidationError as ex:
@@ -159,6 +159,7 @@ class BaseRdfSerializer(object):
         g = Graph()
         for k, v in self.namespace_manager.namespaces.items():
             g.bind(k, v)
+
         if subject_node is None:
             if subject_iri.startswith("_:"):
                 subject_node = BNode(subject_iri)
@@ -181,19 +182,22 @@ class BaseRdfSerializer(object):
                 if subobject_graph:
                     g += subobject_graph
             else:
-                predicate = self.namespace_manager.resolve_term(field.predicate)
-                raw_data = field.render(getattr(self.object, field.object_field_name))
+                raw_data = getattr(self.object, field.object_field_name, None)
+                if raw_data is not None:
+                    predicate = self.namespace_manager.resolve_term(field.predicate)
+                    rendered_data = field.render(raw_data)
 
-                data_type = None
-                if field.datatype and field.datatype[0] != "@":
-                    data_type = self.namespace_manager.resolve_term(field.datatype)
+                    data_type = None
+                    if field.datatype and field.datatype[0] != "@":
+                        data_type = self.namespace_manager.resolve_term(field.datatype)
 
-                if field.datatype == "@id":
-                    data = URIRef(raw_data)
-                else:
-                    data = Literal(raw_data, field.language, data_type)
+                    if field.datatype == "@id":
+                        data = URIRef(rendered_data)
+                    else:
+                        data = Literal(rendered_data, field.language, data_type)
 
-                g.add((subject_node, predicate, data))
+                    g.add((subject_node, predicate, data))
+
         if self.options.rdf_type:
             g.add((subject_node, RDF.type, self.namespace_manager.resolve_term(self.options.rdf_type)))
 
